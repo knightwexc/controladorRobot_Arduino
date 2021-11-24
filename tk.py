@@ -26,7 +26,7 @@ def slider_changed2(event):
 def slider_changed3(event):
     value3label.configure(text=get_current_value3())
 # Imagen ---------------------------------------------------------------------------------------------------------
-img = PhotoImage(file="C:/Users/Jonathan/Pictures/brazo.png")
+img = PhotoImage(file="C:/Users/knigh/Pictures/brazo.png")
 imagen = img.subsample(9, 4)
 
 # Entradas de angulos ---------------------------------------------------------------------------------------------
