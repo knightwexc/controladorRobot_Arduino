@@ -34,7 +34,7 @@ def slider_changed3(event):
     e3.delete(0,END)
     e3.insert(0,get_current_value3())
 # Imagen ---------------------------------------------------------------------------------------------------------
-img = PhotoImage(file="C:/Users/Jonathan/Pictures/brazo.png")
+img = PhotoImage(file="C:/Users/knigh/Pictures/brazo.png")
 imagen = img.subsample(9, 4)
 
 # Entradas de angulos ---------------------------------------------------------------------------------------------
