@@ -13,24 +13,32 @@ ventana.title('Actividad en clase')
 current_value1 = tk.IntVar()
 current_value2 = tk.IntVar()
 current_value3 = tk.IntVar()
+
 def get_current_value1():
-    return '{: .2f}'.format(current_value1.get())
+    return '{:d}'.format(current_value1.get())
 def get_current_value2():
-    return '{: .2f}'.format(current_value2.get())
+    return '{:d}'.format(current_value2.get())
 def get_current_value3():
-    return '{: .2f}'.format(current_value3.get())
+    return '{:d}'.format(current_value3.get())
+
 def slider_changed1(event):
     value1label.configure(text=get_current_value1())
+    e1.delete(0,END)
+    e1.insert(0,get_current_value1())
 def slider_changed2(event):
     value2label.configure(text=get_current_value2())
+    e2.delete(0,END)
+    e2.insert(0,get_current_value2())
 def slider_changed3(event):
     value3label.configure(text=get_current_value3())
+    e3.delete(0,END)
+    e3.insert(0,get_current_value3())
 # Imagen ---------------------------------------------------------------------------------------------------------
 img = PhotoImage(file="C:/Users/Jonathan/Pictures/brazo.png")
 imagen = img.subsample(9, 4)
 
 # Entradas de angulos ---------------------------------------------------------------------------------------------
-e1 = Entry(ventana,width=4)
+e1 = Entry(ventana,width=4,text=get_current_value1())
 e2 = Entry(ventana,width=4)
 e3 = Entry(ventana,width=4)
 e1Label = Label(ventana, text="S1:")
