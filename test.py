@@ -2,33 +2,49 @@ import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 import PIL
-from PIL import Image, ImageT
+from PIL import Image, ImageTk
+
+
 class Page(tk.Frame):
     def __init__(self, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
 
     def show(self):
         self.lift()
+
+
 class Page1(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
+       self.grid_rowconfigure(0, weight=1)
+       self.grid_rowconfigure(5, weight=1)
+       self.grid_columnconfigure(0, weight=1)
+       self.grid_columnconfigure(6, weight=1)
+
        current_value1 = tk.IntVar()
        current_value2 = tk.IntVar()
        current_value3 = tk.IntVar()
-       img = PhotoImage(file="C:/Users/knigh/Pictures/brazo.png")
+       img = PhotoImage(file="C:/Users/Jonathan/Pictures/brazo.png")
        imagen = img.subsample(9, 4)
+       self.imagen = imagen
        def get_current_value1():
-           return '{: .2f}'.format(current_value1.get())
+            return '{:d}'.format(current_value1.get())
        def get_current_value2():
-           return '{: .2f}'.format(current_value2.get())
+            return '{:d}'.format(current_value2.get())
        def get_current_value3():
-           return '{: .2f}'.format(current_value3.get())
+            return '{:d}'.format(current_value3.get())
        def slider_changed1(event):
            value1label.configure(text=get_current_value1())
+           e1.delete(0,END)
+           e1.insert(0,get_current_value1())
        def slider_changed2(event):
-               value2label.configure(text=get_current_value2())
+           value2label.configure(text=get_current_value2())
+           e2.delete(0,END)
+           e2.insert(0,get_current_value2())
        def slider_changed3(event):
-                   value3label.configure(text=get_current_value3())
+            value3label.configure(text=get_current_value3())
+            e3.delete(0,END)
+            e3.insert(0,get_current_value3())
        e1 = tk.Entry(self, width=4)
        e2 = tk.Entry(self, width=4)
        e3 = Entry(self, width=4)
@@ -47,22 +63,22 @@ class Page1(Page):
        slider3Label = ttk.Label(self, text='Slider3:',)
        slider3 = ttk.Scale(self, from_=10, to=170, orient='horizontal',command=slider_changed3, variable=current_value3)
        value3label = ttk.Label(self, text=get_current_value3())
-       slider1.grid(       row=0, column=3)
-       value1label.grid(   row=0, column=4)
-       slider1Label.grid(  row=0, column=2)
-       slider2.grid(       row=1, column=3)
-       value2label.grid(   row=1, column=4)
-       slider2Label.grid(  row=1, column=2)
-       slider3.grid(       row=2, column=3)
-       value3label.grid(   row=2, column=4)
-       slider3Label.grid(  row=2, column=2)
-       Label(self, image=imagen,).grid(row=0 ,column= 0,columnspan = 1, rowspan = 3, padx = 5, pady = 5)
-       e1Label.grid(       row=3, column=0)
-       e1.grid(            row=3, column=1)
-       e2Label.grid(       row=3, column=2)
-       e2.grid(            row=3, column=3)
-       e3Label.grid(       row=3, column=4)
-       e3.grid(            row=3, column=5)
+       slider1.grid(       row=1, column=3)
+       value1label.grid(   row=1, column=4)
+       slider1Label.grid(  row=1, column=2)
+       slider2.grid(       row=2, column=3)
+       value2label.grid(   row=2, column=4)
+       slider2Label.grid(  row=2, column=2)
+       slider3.grid(       row=3, column=3)
+       value3label.grid(   row=3, column=4)
+       slider3Label.grid(  row=3, column=2)
+       Label(self, image=imagen,).grid(row=1 ,column= 1,columnspan = 1, rowspan = 3, padx = 5, pady = 5)
+       e1Label.grid(       row=4, column=0)
+       e1.grid(            row=4, column=1)
+       e2Label.grid(       row=4, column=2)
+       e2.grid(            row=4, column=3)
+       e3Label.grid(       row=4, column=4)
+       e3.grid(            row=4, column=5)
 
 
 
