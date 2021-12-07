@@ -24,7 +24,7 @@ class Page1(Page):
        current_value1 = tk.IntVar()
        current_value2 = tk.IntVar()
        current_value3 = tk.IntVar()
-       img = PhotoImage(file="C:/Users/Jonathan/Pictures/brazo.png")
+       img = PhotoImage(file="C:/Users/Knigh/Pictures/brazo.png")
        imagen = img.subsample(9, 4)
        self.imagen = imagen
        def get_current_value1():
@@ -73,12 +73,12 @@ class Page1(Page):
        value3label.grid(   row=3, column=4)
        slider3Label.grid(  row=3, column=2)
        Label(self, image=imagen,).grid(row=1 ,column= 1,columnspan = 1, rowspan = 3, padx = 5, pady = 5)
-       e1Label.grid(       row=4, column=0)
-       e1.grid(            row=4, column=1)
-       e2Label.grid(       row=4, column=2)
-       e2.grid(            row=4, column=3)
-       e3Label.grid(       row=4, column=4)
-       e3.grid(            row=4, column=5)
+       e1Label.grid(       row=4, column=1)
+       e1.grid(            row=4, column=2)
+       e2Label.grid(       row=4, column=3)
+       e2.grid(            row=4, column=4)
+       e3Label.grid(       row=4, column=5)
+       e3.grid(            row=4, column=6)
 
 
 
