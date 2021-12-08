@@ -1,8 +1,12 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
-import PIL
-from PIL import Image, ImageTk
+import numpy as np
+import pyfirmata
+from pyfirmata import Arduino, SERVO
+from time import sleep
+
+
 
 
 class Page(tk.Frame):
@@ -12,10 +16,46 @@ class Page(tk.Frame):
     def show(self):
         self.lift()
 
+class Arduino():
+
+    board = Arduino('COM5')
+    servoPinCodo = 11
+    servoPinPinza = 10
+    servoPinBase = 9
+    board.digital[servoPinPinza].mode = SERVO
+    board.digital[servoPinCodo].mode = SERVO
+    board.digital[servoPinBase].mode = SERVO
+
+    board.digital[servoPinPinza].write(0)
+    board.digital[servoPinCodo].write(0)
+    board.digital[servoPinBase].write(0)
+
+    iterator = pyfirmata.util.Iterator(board)
+    iterator.start()
+    
+    def Guardar():
+        print(Arduino.board.digital[Arduino.servoPinBase].read())
+        print("Servo en "+ str(Arduino.board.digital[Arduino.servoPinBase].read())+" grados")
+        sleep(0.5)
+    def Reproducir():
+        
+        pinza = Page1.get_current_value1()
+        brazo = '{:d}'.format(Page1.current_value2.get())
+        base = '{:d}'.format(Page1.current_value3.get())
+        print(pinza)
+        print(Arduino.board.digital[Arduino.servoPinBase].write(pinza))
+        sleep(0.5)
+    def Borrar():
+        print("Configurando")
+        Arduino.board.digital[Arduino.servoPinBase].write(20)
+        sleep(0.5)
 
 class Page1(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
+
+
+
        self.grid_rowconfigure(0, weight=1)
        self.grid_rowconfigure(5, weight=1)
        self.grid_columnconfigure(0, weight=1)
@@ -24,9 +64,9 @@ class Page1(Page):
        current_value1 = tk.IntVar()
        current_value2 = tk.IntVar()
        current_value3 = tk.IntVar()
-    #   img = PhotoImage(file="C:/Users/Jonathan/Pictures/brazo.png")
-    #   imagen = img.subsample(9, 4)
-    #   self.imagen = imagen
+
+       
+
        global canvas
        canvas = Canvas(self,width=200,height=200)
        
@@ -42,13 +82,17 @@ class Page1(Page):
 
        sliderFrame = Frame(self)
        entryFrame = Frame(self)
+       buttonFrame = Frame(self)
 
        def get_current_value1():
-            return '{:d}'.format(current_value1.get())
+            pinza = '{:d}'.format(current_value1.get())
+            return pinza
        def get_current_value2():
-            return '{:d}'.format(current_value2.get())
+            brazo = '{:d}'.format(current_value2.get())
+            return brazo
        def get_current_value3():
-            return '{:d}'.format(current_value3.get())
+            base = '{:d}'.format(current_value3.get())
+            return base
        def slider_changed1(event):
            value1label.configure(text=get_current_value1())
            e1.delete(0,END)
@@ -61,6 +105,7 @@ class Page1(Page):
             value3label.configure(text=get_current_value3())
             e3.delete(0,END)
             e3.insert(0,get_current_value3())
+
        e1 = tk.Entry(entryFrame, width=4)
        e2 = tk.Entry(entryFrame, width=4)
        e3 = Entry(entryFrame, width=4)
@@ -82,10 +127,15 @@ class Page1(Page):
        slider3 = ttk.Scale(sliderFrame, from_=10, to=170, orient='horizontal',command=slider_changed3, variable=current_value3)
        value3label = ttk.Label(sliderFrame, text=get_current_value3())
 
+       Guardar = ttk.Button(buttonFrame,command=Arduino.Guardar, text="Guardar")
+       Reproducir = ttk.Button(buttonFrame,command=Arduino.Reproducir, text="Reproducir")
+       Borrar = ttk.Button(buttonFrame,command=Arduino.Borrar, text="Borrar")
+
 
        canvas.grid(         row=1 ,column= 1,rowspan=2)
        sliderFrame.grid(    row=1,column=2,sticky= N)
        entryFrame.grid(     row=2,column=2,sticky= N)
+       buttonFrame.grid(    row=3,column=2,sticky= N)
 
        slider1Label.grid(  row=0, column=0)
        slider1.grid(       row=0, column=1)
@@ -98,12 +148,11 @@ class Page1(Page):
        slider3Label.grid(  row=2, column=0)
        slider3.grid(       row=2, column=1)
        value3label.grid(   row=2, column=2)
-      
-      # Label(self, image=imagen,).grid(row=1 ,column= 1,columnspan = 1, rowspan = 3, padx = 5, pady = 5)
+       Guardar.grid(       row=0, column=0)
+       Reproducir.grid(    row=1, column=0)
+       Borrar.grid(        row=2, column=0)
 
-    #   base.grid(row=1, column=1)
-    #   baseGiro.grid(row=2, column=1)
-       
+
        e1Label.grid(       row=0, column=1)
        e1.grid(            row=0, column=2)
        e2Label.grid(       row=0, column=3)
