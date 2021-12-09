@@ -1,25 +1,29 @@
+import pyfirmata
 from pyfirmata import Arduino, SERVO
 from time import sleep
-import pyfirmata
 
 
-port = 'COM3'
+
+port = 'COM5'
 board = Arduino(port)
+
+
 # Pines de los servos
-servoSuperior = 10
-servoMedio = 9
-servoInferior = 8
+servoPinCodo = 11;
+servoPinPinza = 10;
+servoPinBase = 9;
 
 # Pines asignados a la funcion de SERVO
-board.digital[servoSuperior].mode = SERVO
-board.digital[servoMedio].mode = SERVO
-board.digital[servoInferior].mode = SERVO
+board.digital[servoPinPinza].mode = SERVO
+board.digital[servoPinCodo].mode = SERVO
+board.digital[servoPinBase].mode = SERVO
+
 # Potenciometros
 potenciometroSuperior = board.get_pin('a:0:i')
 potenciometroMedio = board.get_pin('a:1:i')
 potenciometroInferior = board.get_pin('a:2:i')
 # Angulo maximo de los servos
-maximoAngulo = 180
+maximoAngulo = 170
 # Iniciar los potenciometros
 it = pyfirmata.util.Iterator(board)
 it.start()
@@ -43,7 +47,6 @@ def rotateServoInferior(pin, angulo):
 
 
 while True:
-   
     # -------------------------------------------------------------------
     analog_value1 = potenciometroSuperior.read()
     sleep(0.5)
