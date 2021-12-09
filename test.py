@@ -2,9 +2,16 @@ import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 import numpy as np
+from numpy import dtype, savetxt
 import pyfirmata
 from pyfirmata import Arduino, SERVO
 from time import sleep
+import csv
+import pandas as pd
+import math
+from math import cos,sin
+from matrices import *
+from pandastable import Table, TableModel
 
 
 
@@ -21,7 +28,7 @@ class Page1(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
 
-       board = Arduino('COM3')
+       board = Arduino('COM5')
        servoPinCodo = 11
        servoPinPinza = 10
        servoPinBase = 9
@@ -32,7 +39,6 @@ class Page1(Page):
        board.digital[servoPinPinza].write(0)
        board.digital[servoPinCodo].write(0)
        board.digital[servoPinBase].write(0)
-
        iterator = pyfirmata.util.Iterator(board)
        iterator.start()
     
@@ -40,24 +46,40 @@ class Page1(Page):
            aCodo= int(board.digital[servoPinCodo].read())
            aPinza= int(board.digital[servoPinPinza].read())
            aBase = int(board.digital[servoPinBase].read())
-           posiciones = np.array([aCodo,aPinza,aBase])
-        #    guardado = ([posiciones])
-           global guardado
+           posiciones = np.array([[aCodo],[aPinza],[aBase]])
+           
+
            guardado = []
            guardado.append(posiciones)
-           
            guardado = np.asarray(guardado)
-           print(guardado)
-           
+           guardado = guardado.tolist()
+           with open("data.csv", 'a', newline='') as csvfile:
+              writer = csv.writer(csvfile, delimiter=',')
+              writer.writerows(guardado)
+
+        #   with open('data.csv', 'a') as abc:
+        #       np.savetxt(abc, guardado, fmt='%i', delimiter=',',comments='')
            
        def Reproducir():
-           for i in guardado:
-               print(i)
+           df = pd.read_csv('data.csv', header=None)
+           valores = df.to_numpy()
+           print(valores)
+           for i in valores:
+               pinza = int(i[0].lstrip("[").rstrip("]"))
+               codo = int(i[1].lstrip("[").rstrip("]"))
+               base = int(i[2].lstrip("[").rstrip("]"))
+               board.digital[servoPinPinza].write(pinza)
+               board.digital[servoPinCodo].write(codo)
+               print(base)
+               board.digital[servoPinBase].write(base)
+               sleep(2)
+           
+
                
        def Borrar():
-           print("Configurando")
-           board.digital[servoPinBase].write(20)
-           sleep(0.5)
+           f = open("data.csv", "w")
+           f.truncate()
+           f.close()
 
        self.grid_rowconfigure(0, weight=1)
        self.grid_rowconfigure(5, weight=1)
@@ -74,14 +96,12 @@ class Page1(Page):
        canvas = Canvas(self,width=200,height=200)
        
 
-       canvas.create_line(0,200, 200,200)
-       a1= (100,200)
-       a2= (100,80)
-       canvas.create_line(a1, a2)
-       b2=(120,20)
-       canvas.create_line(a2, b2)
-       c2=(100,0)
-       canvas.create_line(b2, c2)
+       canvas.create_polygon(0,200, 200,200,width=3,outline="black")
+       canvas.create_polygon(100,200, 100,80,width=3,outline="black")
+       brazo = canvas.create_polygon(100,80,193,45,width=3,outline="black")
+       pinza = canvas.create_polygon(120,20, 100,0,width=3,outline="black")
+
+
 
        sliderFrame = Frame(self)
        entryFrame = Frame(self)
@@ -94,6 +114,26 @@ class Page1(Page):
        def get_current_value2():
             codo = '{:d}'.format(current_value2.get())
             board.digital[servoPinCodo].write(codo)
+            angle_in_degress = int(codo) - 20
+            angle_in_radians = float(angle_in_degress) * math.pi / 180
+            line_length = 100
+            center_x = 100
+            center_y = 80
+            end_x = center_x + line_length * math.cos(angle_in_radians)
+            end_y = center_y + line_length * math.sin(angle_in_radians)
+            print(end_x)
+            print(end_y)
+            #line = canvas.create_polygon(center_x,center_y,end_x,end_y,width=3, outline="white")
+            
+            canvas.coords(brazo, center_x,center_y,end_x,end_y)
+            canvas.coords(pinza, center_x,center_y,end_x,end_y)
+
+
+
+            #image = Image.open('C:/Users/Jonathan/Pictures/884.png')
+            #res = image.resize((3, 100))
+            #res.place(x=100, y=80)
+            #res.rotate(angle_in_degress)
             return codo
        def get_current_value3():
             base = '{:d}'.format(current_value3.get())
@@ -197,9 +237,80 @@ class Page2(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
 
+       tablaFrame = Frame(self)
+       botonesFrame = Frame(self)
+       def calcular():
+          df = pd.read_csv('data.csv', header=None)
+          ultimoValor = df.iloc[-1:]
+          modificar = ultimoValor.to_numpy(dtype="str")
+          for i in modificar:
+             pinza = int(i[0].lstrip("[").rstrip("]"))
+             codo = int(i[1].lstrip("[").rstrip("]"))
+             base = int(i[2].lstrip("[").rstrip("]"))
+             matrices(pinza,codo,base)
 
-       global canvas
-       canvas.grid(         row=1 ,column= 1,rowspan=2)
+
+       def matrices(anguloSuperior, anguloMedio, anguloInferior):
+           teta1 = anguloInferior  # Giro en z
+           d1 = 16.3  # Distancia de z
+           a1 = 0  # Distancia de x
+           alfa1 = 0  # Giro en x
+
+           teta2 = anguloMedio  # Giro en z
+           d2 = 9.6  # Distancia de z
+           a2 = 0  # Distancia de x
+           alfa2 = 0  # Giro en x
+
+           teta3 = anguloSuperior  # Giro en z
+           d3 = 0.5  # Distancia de z
+           a3 = 0  # Distancia de x
+           alfa3 = 0  # Giro en x
+
+           matrizAi = np.array([[teta1, d1, a1, alfa1], [teta2, d2, a2, alfa2], [teta3, d3, a3, alfa3]])
+
+           matrizA1 = np.array([[cos(teta1), -cos(alfa1) * sin(teta1), sin(alfa1) * sin(teta1), a1 * cos(teta1)], [sin(teta1), cos(alfa1) * cos(teta1), - sin(alfa1) * cos(teta1), a1 * sin(teta1)], [0, 0, 0, 1]])
+
+           matrizA2 = np.array([[cos(teta2), -cos(alfa2) * sin(teta2), sin(alfa2) * sin(teta2), a2 * cos(teta2)], [sin(teta2), cos(alfa2) * cos(teta2), -sin(alfa2) * cos(teta2), a2 * sin(teta2)], [0, 0, 0, 1]])
+
+           matrizA3 = np.array([[cos(teta3), -cos(alfa3) * sin(teta3), sin(alfa3) * sin(teta3), a3 * cos(teta3)], [sin(teta3), cos(alfa3) * cos(teta3), - sin(alfa3) * cos(teta3), a3 * sin(teta3)], [0, 0, 0, 1]])
+
+           matrizT = matrizA1 * matrizA2 * matrizA3
+
+
+
+           columnas = np.array(['θ', 'd', 'a', 'α'])
+           dfAi = pd.DataFrame(matrizAi)
+           dfA1 = pd.DataFrame(matrizA1)
+           dfA2 = pd.DataFrame(matrizA2)
+           dfA3 = pd.DataFrame(matrizA3)
+           dfT = pd.DataFrame(matrizT)
+           guardado = [[[dfAi],[dfA1],[dfA2],[dfA3],[dfT]]]
+           guardado = np.asarray(guardado)
+           guardado = guardado.tolist()
+           with open("matrices.csv", 'a', newline='') as csvfile:
+              writer = csv.writer(csvfile, delimiter=',')
+              writer.writerows(guardado)
+
+
+           df = pd.read_csv('matrices.csv', names=["dfAi", "dfA1", "dfA2", "dfA3","dfT"])
+           ultimoValor = df.iloc[-1:]
+           dfAi_show = ultimoValor["dfAi"].to_frame()
+           self.table = pt = Table(tablaFrame, dataframe=dfAi_show,showtoolbar=True, showstatusbar=True,editable=False)
+           pt.grid(         row=1 ,column= 1)
+           pt.show()
+
+       def Borrar():
+            f = open("matrices.csv", "w")
+            f.truncate()
+            f.close()
+
+
+       tablaFrame.grid(         row=1 ,column= 1)
+       botonesFrame.grid(         row=1 ,column= 2)
+       Calcular = ttk.Button(botonesFrame,command=calcular, text="Calcular")
+       Borrar = ttk.Button(botonesFrame,command=Borrar, text="Borrar")
+       Calcular.grid(         row=1)
+       Borrar.grid(         row=2)
 
 
 
