@@ -16,45 +16,48 @@ class Page(tk.Frame):
     def show(self):
         self.lift()
 
-class Arduino():
-
-    board = Arduino('COM5')
-    servoPinCodo = 11
-    servoPinPinza = 10
-    servoPinBase = 9
-    board.digital[servoPinPinza].mode = SERVO
-    board.digital[servoPinCodo].mode = SERVO
-    board.digital[servoPinBase].mode = SERVO
-
-    board.digital[servoPinPinza].write(0)
-    board.digital[servoPinCodo].write(0)
-    board.digital[servoPinBase].write(0)
-
-    iterator = pyfirmata.util.Iterator(board)
-    iterator.start()
-    
-    def Guardar():
-        print(Arduino.board.digital[Arduino.servoPinBase].read())
-        print("Servo en "+ str(Arduino.board.digital[Arduino.servoPinBase].read())+" grados")
-        sleep(0.5)
-    def Reproducir():
-        
-        pinza = Page1.get_current_value1()
-        brazo = '{:d}'.format(Page1.current_value2.get())
-        base = '{:d}'.format(Page1.current_value3.get())
-        print(pinza)
-        print(Arduino.board.digital[Arduino.servoPinBase].write(pinza))
-        sleep(0.5)
-    def Borrar():
-        print("Configurando")
-        Arduino.board.digital[Arduino.servoPinBase].write(20)
-        sleep(0.5)
 
 class Page1(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
 
+       board = Arduino('COM3')
+       servoPinCodo = 11
+       servoPinPinza = 10
+       servoPinBase = 9
+       board.digital[servoPinPinza].mode = SERVO
+       board.digital[servoPinCodo].mode = SERVO
+       board.digital[servoPinBase].mode = SERVO
 
+       board.digital[servoPinPinza].write(0)
+       board.digital[servoPinCodo].write(0)
+       board.digital[servoPinBase].write(0)
+
+       iterator = pyfirmata.util.Iterator(board)
+       iterator.start()
+    
+       def Guardar():
+           aCodo= int(board.digital[servoPinCodo].read())
+           aPinza= int(board.digital[servoPinPinza].read())
+           aBase = int(board.digital[servoPinBase].read())
+           posiciones = np.array([aCodo,aPinza,aBase])
+        #    guardado = ([posiciones])
+           global guardado
+           guardado = []
+           guardado.append(posiciones)
+           
+           guardado = np.asarray(guardado)
+           print(guardado)
+           
+           
+       def Reproducir():
+           for i in guardado:
+               print(i)
+               
+       def Borrar():
+           print("Configurando")
+           board.digital[servoPinBase].write(20)
+           sleep(0.5)
 
        self.grid_rowconfigure(0, weight=1)
        self.grid_rowconfigure(5, weight=1)
@@ -86,12 +89,15 @@ class Page1(Page):
 
        def get_current_value1():
             pinza = '{:d}'.format(current_value1.get())
+            board.digital[servoPinPinza].write(pinza)
             return pinza
        def get_current_value2():
-            brazo = '{:d}'.format(current_value2.get())
-            return brazo
+            codo = '{:d}'.format(current_value2.get())
+            board.digital[servoPinCodo].write(codo)
+            return codo
        def get_current_value3():
             base = '{:d}'.format(current_value3.get())
+            board.digital[servoPinBase].write(base)
             return base
        def slider_changed1(event):
            value1label.configure(text=get_current_value1())
@@ -127,9 +133,9 @@ class Page1(Page):
        slider3 = ttk.Scale(sliderFrame, from_=10, to=170, orient='horizontal',command=slider_changed3, variable=current_value3)
        value3label = ttk.Label(sliderFrame, text=get_current_value3())
 
-       Guardar = ttk.Button(buttonFrame,command=Arduino.Guardar, text="Guardar")
-       Reproducir = ttk.Button(buttonFrame,command=Arduino.Reproducir, text="Reproducir")
-       Borrar = ttk.Button(buttonFrame,command=Arduino.Borrar, text="Borrar")
+       Guardar = ttk.Button(buttonFrame,command=Guardar, text="Guardar")
+       Reproducir = ttk.Button(buttonFrame,command=Reproducir, text="Reproducir")
+       Borrar = ttk.Button(buttonFrame,command=Borrar, text="Borrar")
 
 
        canvas.grid(         row=1 ,column= 1,rowspan=2)
