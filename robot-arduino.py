@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk,messagebox
 import numpy as np
 from numpy import dtype, savetxt
 import pyfirmata
@@ -10,12 +10,14 @@ import csv
 import pandas as pd
 import math
 from math import cos,sin
-from matrices import *
 from pandastable import Table, TableModel
 
 
 
-
+board = Arduino('COM5')
+servoPinCodo = 11
+servoPinPinza = 10
+servoPinBase = 9
 class Page(tk.Frame):
     def __init__(self, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
@@ -28,37 +30,47 @@ class Page1(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
 
-       board = Arduino('COM5')
-       servoPinCodo = 11
-       servoPinPinza = 10
-       servoPinBase = 9
+
        board.digital[servoPinPinza].mode = SERVO
        board.digital[servoPinCodo].mode = SERVO
        board.digital[servoPinBase].mode = SERVO
 
-       board.digital[servoPinPinza].write(0)
-       board.digital[servoPinCodo].write(0)
-       board.digital[servoPinBase].write(0)
+       board.digital[servoPinPinza].write(10)
+       board.digital[servoPinCodo].write(10)
+       board.digital[servoPinBase].write(10)
        iterator = pyfirmata.util.Iterator(board)
        iterator.start()
     
        def Guardar():
-           aCodo= int(board.digital[servoPinCodo].read())
            aPinza= int(board.digital[servoPinPinza].read())
+           aCodo= int(board.digital[servoPinCodo].read())
            aBase = int(board.digital[servoPinBase].read())
-           posiciones = np.array([[aCodo],[aPinza],[aBase]])
-           
 
-           guardado = []
-           guardado.append(posiciones)
-           guardado = np.asarray(guardado)
-           guardado = guardado.tolist()
-           with open("data.csv", 'a', newline='') as csvfile:
-              writer = csv.writer(csvfile, delimiter=',')
-              writer.writerows(guardado)
-
-        #   with open('data.csv', 'a') as abc:
-        #       np.savetxt(abc, guardado, fmt='%i', delimiter=',',comments='')
+           posiciones = np.array([[aPinza],[aCodo],[aBase]])
+           if aCodo == 0 and aPinza == 0 and aBase == 0:
+               messagebox.showinfo(message="Modifique posiciones antes de guardar posiciones en 0", title="Advertencia")
+           else:
+               import os
+               if os.stat("data.csv").st_size == 0:
+                   guardado = []
+                   guardado.append(posiciones)
+                   guardado = np.asarray(guardado)
+                   guardado = guardado.tolist()
+                   with open("data.csv", 'a', newline='') as csvfile:
+                      writer = csv.writer(csvfile, delimiter=',')
+                      writer.writerows(guardado)
+               else:
+                   df = pd.read_csv('data.csv', header=None)
+                   guardado = []
+                   guardado.append(posiciones)
+                   guardado = np.asarray(guardado)
+                   if str(guardado[0,0]) == str(df.iloc[-1,0]) and str(guardado[0,1]) == str(df.iloc[-1,1]) and str(guardado[0,2]) == str(df.iloc[-1,2]):
+                      messagebox.showinfo(message="Modifica valores, la posición ya se encuentra registrada", title="Advertencia")
+                   else:
+                       guardado = guardado.tolist()
+                       with open("data.csv", 'a', newline='') as csvfile:
+                          writer = csv.writer(csvfile, delimiter=',')
+                          writer.writerows(guardado)
            
        def Reproducir():
            df = pd.read_csv('data.csv', header=None)
@@ -90,9 +102,7 @@ class Page1(Page):
        current_value2 = tk.IntVar()
        current_value3 = tk.IntVar()
 
-       
-
-       global canvas
+    
        canvas = Canvas(self,width=200,height=200)
        
 
@@ -109,21 +119,21 @@ class Page1(Page):
 
        def get_current_value1():
             pinza = '{:d}'.format(current_value1.get())
+            modPinza = str(pinza)+"°"
             board.digital[servoPinPinza].write(pinza)
-            return pinza
+            return modPinza
        def get_current_value2():
             codo = '{:d}'.format(current_value2.get())
+            modCodo = str(codo)+"°"
             board.digital[servoPinCodo].write(codo)
-            angle_in_degress = int(codo) - 20
+            angle_in_degress = int(codo) - 180
             angle_in_radians = float(angle_in_degress) * math.pi / 180
             line_length = 100
             center_x = 100
             center_y = 80
             end_x = center_x + line_length * math.cos(angle_in_radians)
             end_y = center_y + line_length * math.sin(angle_in_radians)
-            print(end_x)
-            print(end_y)
-            #line = canvas.create_polygon(center_x,center_y,end_x,end_y,width=3, outline="white")
+
             
             canvas.coords(brazo, center_x,center_y,end_x,end_y)
             canvas.coords(pinza, center_x,center_y,end_x,end_y)
@@ -134,42 +144,53 @@ class Page1(Page):
             #res = image.resize((3, 100))
             #res.place(x=100, y=80)
             #res.rotate(angle_in_degress)
-            return codo
+            return modCodo
        def get_current_value3():
             base = '{:d}'.format(current_value3.get())
+            modBase = str(base)+"°"
             board.digital[servoPinBase].write(base)
-            return base
+            return modBase
        def slider_changed1(event):
            value1label.configure(text=get_current_value1())
+           e1.config(state = NORMAL)
            e1.delete(0,END)
            e1.insert(0,get_current_value1())
+           e1.config(state = "readonly")
        def slider_changed2(event):
            value2label.configure(text=get_current_value2())
+           e2.config(state = NORMAL)
            e2.delete(0,END)
            e2.insert(0,get_current_value2())
+           e2.config(state = "readonly")
        def slider_changed3(event):
             value3label.configure(text=get_current_value3())
+            e3.config(state = NORMAL)
             e3.delete(0,END)
             e3.insert(0,get_current_value3())
+            e3.config(state = "readonly")
 
-       e1 = tk.Entry(entryFrame, width=4)
-       e2 = tk.Entry(entryFrame, width=4)
-       e3 = Entry(entryFrame, width=4)
+       e1 = tk.Entry(entryFrame, width=4,state = "readonly")
+       e2 = tk.Entry(entryFrame, width=4,state = "readonly")
+       e3 = Entry(entryFrame, width=4,state = "readonly")
+
+       e1.insert(0, '0')
+       e2.insert(0, '0')
+       e3.insert(0, '0')
        e1Label = Label(entryFrame, text="S1:")
        e2Label = Label(entryFrame, text="S2:")
        e3Label = Label(entryFrame, text="S3:")
 
 
        value1label = ttk.Label(sliderFrame, text=get_current_value1())
-       slider1Label = ttk.Label(sliderFrame, text='Slider1:',)
+       slider1Label = ttk.Label(sliderFrame, text='Pinza:',)
        slider1 = ttk.Scale(sliderFrame, from_=10, to=170, orient='horizontal',command=slider_changed1, variable=current_value1)
        value1label = ttk.Label(sliderFrame, text=get_current_value1())
        value2label = ttk.Label(sliderFrame, text=get_current_value2())
-       slider2Label = ttk.Label(sliderFrame, text='Slider2:',)
+       slider2Label = ttk.Label(sliderFrame, text='Codo:',)
        slider2 = ttk.Scale(sliderFrame, from_=10, to=170, orient='horizontal',command=slider_changed2, variable=current_value2)
        value2label = ttk.Label(sliderFrame, text=get_current_value2())
        value3label = ttk.Label(sliderFrame, text=get_current_value3())
-       slider3Label = ttk.Label(sliderFrame, text='Slider3:',)
+       slider3Label = ttk.Label(sliderFrame, text='Base:',)
        slider3 = ttk.Scale(sliderFrame, from_=10, to=170, orient='horizontal',command=slider_changed3, variable=current_value3)
        value3label = ttk.Label(sliderFrame, text=get_current_value3())
 
@@ -240,31 +261,36 @@ class Page2(Page):
        tablaFrame = Frame(self)
        botonesFrame = Frame(self)
        def calcular():
-          df = pd.read_csv('data.csv', header=None)
-          ultimoValor = df.iloc[-1:]
-          modificar = ultimoValor.to_numpy(dtype="str")
-          for i in modificar:
-             pinza = int(i[0].lstrip("[").rstrip("]"))
-             codo = int(i[1].lstrip("[").rstrip("]"))
-             base = int(i[2].lstrip("[").rstrip("]"))
-             matrices(pinza,codo,base)
+          
+          import os
+          if os.stat("data.csv").st_size == 0:
+             messagebox.showinfo(message="Primero debe guardar una posición del robot", title="Advertencia")
+          else:
+             df = pd.read_csv('data.csv', header=None)
+             ultimoValor = df.iloc[-1:]
+             modificar = ultimoValor.to_numpy(dtype="str")
+             for i in modificar:
+                pinza = int(i[0].lstrip("[").rstrip("]"))
+                codo = int(i[1].lstrip("[").rstrip("]"))
+                base = int(i[2].lstrip("[").rstrip("]"))
+                matrices(pinza,codo,base)
 
 
        def matrices(anguloSuperior, anguloMedio, anguloInferior):
-           teta1 = anguloInferior  # Giro en z
-           d1 = 16.3  # Distancia de z
-           a1 = 0  # Distancia de x
-           alfa1 = 0  # Giro en x
+           teta1 = anguloInferior  
+           d1 = 16.3 
+           a1 = 0
+           alfa1 = 0
 
-           teta2 = anguloMedio  # Giro en z
-           d2 = 9.6  # Distancia de z
-           a2 = 0  # Distancia de x
-           alfa2 = 0  # Giro en x
+           teta2 = anguloMedio  
+           d2 = 9.6 
+           a2 = 0
+           alfa2 = 0
 
-           teta3 = anguloSuperior  # Giro en z
-           d3 = 0.5  # Distancia de z
-           a3 = 0  # Distancia de x
-           alfa3 = 0  # Giro en x
+           teta3 = anguloSuperior  
+           d3 = 0.5
+           a3 = 0
+           alfa3 = 0
 
            matrizAi = np.array([[teta1, d1, a1, alfa1], [teta2, d2, a2, alfa2], [teta3, d3, a3, alfa3]])
 
@@ -276,15 +302,14 @@ class Page2(Page):
 
            matrizT = matrizA1 * matrizA2 * matrizA3
 
-
-
-           columnas = np.array(['θ', 'd', 'a', 'α'])
            dfAi = pd.DataFrame(matrizAi)
            dfA1 = pd.DataFrame(matrizA1)
            dfA2 = pd.DataFrame(matrizA2)
            dfA3 = pd.DataFrame(matrizA3)
            dfT = pd.DataFrame(matrizT)
-           guardado = [[[dfAi],[dfA1],[dfA2],[dfA3],[dfT]]]
+           posiciones = np.array([dfAi,dfA1,dfA2,dfA3,dfT])
+           guardado = []
+           guardado.append(posiciones)
            guardado = np.asarray(guardado)
            guardado = guardado.tolist()
            with open("matrices.csv", 'a', newline='') as csvfile:
@@ -293,9 +318,12 @@ class Page2(Page):
 
 
            df = pd.read_csv('matrices.csv', names=["dfAi", "dfA1", "dfA2", "dfA3","dfT"])
-           ultimoValor = df.iloc[-1:]
-           dfAi_show = ultimoValor["dfAi"].to_frame()
-           self.table = pt = Table(tablaFrame, dataframe=dfAi_show,showtoolbar=True, showstatusbar=True,editable=False)
+           ultimoValor = df.iloc[-1:].transpose()
+           ultimoValor.insert(0, "Matrices", ["dfAi", "dfA1", "dfA2", "dfA3","dfT"], True)
+        #   df = pd.read_csv('matrices.csv', names=["dfAi", "dfA1", "dfA2", "dfA3","dfT"])
+        #   ultimoValor = df.iloc[-1:]
+        #   dfAi_show = ultimoValor["dfAi"].to_frame()
+           self.table = pt = Table(tablaFrame, dataframe=ultimoValor,showtoolbar=True, showstatusbar=True,editable=False, width=450, height=310)
            pt.grid(         row=1 ,column= 1)
            pt.show()
 
@@ -306,11 +334,11 @@ class Page2(Page):
 
 
        tablaFrame.grid(         row=1 ,column= 1)
-       botonesFrame.grid(         row=1 ,column= 2)
+       botonesFrame.grid(         row=2 ,column= 1)
        Calcular = ttk.Button(botonesFrame,command=calcular, text="Calcular")
        Borrar = ttk.Button(botonesFrame,command=Borrar, text="Borrar")
-       Calcular.grid(         row=1)
-       Borrar.grid(         row=2)
+       Calcular.grid(         row=0, column= 0)
+       Borrar.grid(         row=0, column= 1)
 
 
 
@@ -334,8 +362,58 @@ class Page2(Page):
 class Page3(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
-       label = tk.Label(self, text="This is page 3")
-       label.pack(side="top", fill="both", expand=True)
+       global board
+       board.digital[servoPinPinza].write(10)
+       board.digital[servoPinCodo].write(10)
+       board.digital[servoPinBase].write(10)
+       iterator = pyfirmata.util.Iterator(board)
+       iterator.start()
+
+       self.grid_rowconfigure(0, weight=1)
+       self.grid_rowconfigure(5, weight=1)
+       self.grid_columnconfigure(0, weight=1)
+       self.grid_columnconfigure(6, weight=1)
+       
+       canvas = Canvas(self,width=200,height=200)
+       canvas.create_polygon(0,200, 200,200,width=3,outline="black")
+       canvas.create_polygon(100,200, 100,80,width=3,outline="black")
+       movimiento_brazo = canvas.create_polygon(100,80,193,45,width=3,outline="black")
+
+       movimientos = [20,120,20,120,50,20,150,160,170]
+
+
+       def iniciar():
+           
+           for i in movimientos:
+               posicion = i
+               print(posicion)
+               angle_in_degress = int(posicion) - 170
+               angle_in_radians = float(angle_in_degress) * math.pi / 180
+               line_length = 100
+               center_x = 100
+               center_y = 80
+               end_x = center_x + line_length * math.cos(angle_in_radians)
+               end_y = center_y + line_length * math.sin(angle_in_radians)
+               canvas.coords(movimiento_brazo, center_x,center_y,int(end_x),int(end_y))
+               canvas.update_idletasks()
+               board.digital[servoPinCodo].write(posicion)
+               sleep(1)
+                
+
+
+     
+       calcular = ttk.Button(self,command=iniciar, text="simular")
+
+       canvas.grid(         row=1 ,column= 1,rowspan=2)
+       calcular.grid(         row=5 ,column= 1)
+
+
+
+
+
+
+
+
 
 class MainView(tk.Frame):
     def __init__(self, *args, **kwargs):
@@ -367,6 +445,6 @@ if __name__ == "__main__":
     root = tk.Tk()
     main = MainView(root)
     main.pack(side="top", fill="both", expand=True)
-    root.wm_geometry("400x400")
+    root.wm_geometry("550x550")
     root.mainloop()
 
